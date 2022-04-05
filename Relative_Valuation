@@ -28,44 +28,51 @@ while True:
             df_key_ratios = pd.DataFrame(df_ratios[4], index=[2, 3, 4, 5])
             df_num = pd.DataFrame(df_ratios[4])
 
-    # Price per Earning (used is without extraordinary items)
+        # Price per Earning (used is without extraordinary items)
             pe_df = df_key_ratios.iloc[0][1]
 
             # Relative Valuation of the P/E
             Price_PE = pe_df * eps_df
 
-    # Price to Sales Ratio
+        # Price to Sales Ratio
             ps_df = df_key_ratios.iloc[1][1]
 
             # Relative Valuation of the P/S
             Price_PS = ps_df * eps_df
 
-    # Price to Book Ratio
+        # Price to Book Ratio
             pb_df = df_key_ratios.iloc[2][1]
 
             # Relative Valuation of the P/B
             Price_PB = pb_df * eps_df
 
-    # Price to Cash Flows Ratio
+        # Price to Cash Flows Ratio
             pcf_df = df_key_ratios.iloc[3][1]
 
             # Relative Valuation of the P/CF
             Price_PCF = pcf_df * eps_df
 
-    ## Relative average
-            #RA = (Price_PCF + Price_PB + Price_PS + Price_PE)/4
-            RA = ((Price_PS) + (Price_PE))/2
+        ## Get external Intrinstic Estimate
+            url = 'https://trendshare.org/stocks/' + company + '/view'
+            r = requests.get(url)
+            df_intrinsic_value = pd.read_html(r.text)
+            df_i_v = pd.DataFrame(df_intrinsic_value[1]).replace('[\$,]', '', regex=True)
+            df_in_val = df_i_v.iloc[1][2]
+            df_in_val = float(df_in_val)
+
+        ## Relative average
+            RA = ((Price_PCF) + (Price_PB) + (Price_PS) + (Price_PE))/4
             RA = round(RA, 2)
             RA = str(RA)
             print("\nThe estimated relative valuation for " + company + " is: $" + RA)
 
-    # Get the current stock price
+        # Get the current stock price
 
             url = requests.get(f'https://www.cnbc.com/quotes/{company}').text
             soup = BeautifulSoup(url, 'lxml')
             current_price = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
 
-            print("\nThe current stock price of " + company + " is $" + current_price + '.')
+            print("The current stock price of " + company + " is $" + current_price + '.')
 
     except ValueError:
         print("That is not a listed company! \nEnter a valid ticker!")
