@@ -5,9 +5,13 @@ import requests
 import numpy as np
 from bs4 import BeautifulSoup
 
-# Enter Required Return
-required_return = float(input("Enter your required returned as a decimal. \n"))
 
+# Enter Required Return
+required_return = input("Enter your required returned as a decimal. \n")
+if required_return == 'exit':
+    exit()
+else:
+    required_return = float(required_return)
 while True:
     try:
         # Enter the ticker to evaluate
@@ -290,4 +294,5 @@ while True:
     except ValueError:
         print("Not a valid ticker! \nEnter a ticker symbol.")
     except AttributeError:
-        print("Could not find data. \nTry again.")
+        print("Could not find data.")
+        exit()
