@@ -4,14 +4,17 @@ import pandas as pd
 import requests
 import numpy as np
 from bs4 import BeautifulSoup
-
+import re
 
 # Enter Required Return
-required_return = input("Enter your required returned as a decimal. \n")
-if required_return == 'exit':
+try:
+    required_return = input("Enter your required returned as a decimal. \n")
+    if required_return == 'exit':
+        exit()
+    else:
+        required_return = float(required_return)
+except ValueError:
     exit()
-else:
-    required_return = float(required_return)
 while True:
     try:
         # Enter the ticker to evaluate
@@ -35,27 +38,37 @@ while True:
             dt = date.today() - timedelta(5000)
 
             ## 10-year US Treasury Yield
-            url = requests.get(f'https://finance.yahoo.com/quote/%5ETNX?p=^TNX&.tsrc=fin-srch').text
+            url = requests.get(f'https://www.cnbc.com/quotes/US10Y').text
             soup = BeautifulSoup(url, 'lxml')
-
-            Rf = soup.find("fin-streamer", {'class': 'Fw(b) Fz(36px) Mb(-4px) D(ib)'}).text
+            US_Ten_Year_text = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
+            Rf = US_Ten_Year_text.strip("%")
             Rf = float(Rf)
 
-            ## Get Beta (5Y Monthly)
-            url = requests.get(f'https://finance.yahoo.com/quote/{company}/').text
+            ## Get Beta
+            url = requests.get(f'https://www.cnbc.com/quotes/{company}').text
             soup = BeautifulSoup(url, 'lxml')
-
-            beta = soup.find('td', {'data-test': 'BETA_5Y-value'}).text
+            beta_summary_text = soup.find('li', {'class': 'Summary-beta'}).text
+            beta = re.sub(r'[a-zA-Z]', '', beta_summary_text)
             beta = float(beta)
 
             ## Get the Market Rate
-            # Ticker and data source
-            SPY = wb.DataReader('SPY', data_source='yahoo', start=dt)
+            url = 'https://www.macrotrends.net/2526/sp-500-historical-annual-returns'
+            r = requests.get(url)
+            market_text = pd.read_html(r.text)
+            df_market = pd.DataFrame(market_text[0])
 
-            # Calculate total log returns
-            SPY['log_returns'] = np.log(SPY['Adj Close'] / SPY['Adj Close'].shift(1))
+            # Remove Column Names
+            df_market.columns = range(df_market.shape[1])
 
-            log_returns_a = SPY['log_returns'].mean() * 250
+            # 10 Previous Years of market closing price
+            SPY = pd.DataFrame(df_market[1], index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).astype(float)
+
+            # Log Returns
+            # x = np.log(market_close[0]/ market_close[9]).mean
+
+            SPY['log_returns'] = np.log(SPY[1] / SPY[1].shift(-1))
+
+            log_returns_a = SPY['log_returns'].mean()
             Rm = log_returns_a * 100
 
             ## Equity Risk Premium
@@ -79,8 +92,7 @@ while True:
             df_e.columns = range(df_e.shape[1])
 
             # Remove "$" form data
-            array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '',
-                                                                                         regex=True).astype(float)
+            array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(float)
 
             # Get the log growth rate
 
@@ -101,8 +113,7 @@ while True:
             df_r.columns = range(df_r.shape[1])
 
             # Remove "$" form data
-            array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(
-                float)
+            array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(float)
 
             # Get the log growth rate
             array_grwth_rev = np.log((array_grwth_rev) / array_grwth_rev.shift(-1))
@@ -283,8 +294,8 @@ while True:
             W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
 
             print('The best estimated value of ' + company + ' is $' + str(round(W_Avg_Est,2)) + '.')
-            # Get the current stock price
 
+# Get the current stock price
             url = requests.get(f'https://www.cnbc.com/quotes/{company}').text
             soup = BeautifulSoup(url, 'lxml')
             current_price = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
@@ -294,5 +305,4 @@ while True:
     except ValueError:
         print("Not a valid ticker! \nEnter a ticker symbol.")
     except AttributeError:
-        print("Could not find data.")
         exit()
