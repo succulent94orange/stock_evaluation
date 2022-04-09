@@ -292,10 +292,15 @@ while True:
 
 ## Weighted Average of Estimates
             W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
+ print('Price to Cash Flows: ' + str(round(Price_PCF, 2)))
+            print('Price to Book Value: ' + str(round(Price_PB, 2)))
+            print('Price to Sales: ' + str(round(Price_PS, 2)))
+            print('Price to Equity: ' + str(round(Price_PE, 2)))
+            print('Relative Average:  ' +str(round(RA, 2)))
+            print('\nDiscounted Cash Flow Estimate: $' + str(round(Value_of_Stock, 2)))
+            print('\nThe best estimated value of ' + company + ' is $' + str(round(W_Avg_Est,2)) + '.')
+            # Get the current stock price
 
-            print('The best estimated value of ' + company + ' is $' + str(round(W_Avg_Est,2)) + '.')
-
-# Get the current stock price
             url = requests.get(f'https://www.cnbc.com/quotes/{company}').text
             soup = BeautifulSoup(url, 'lxml')
             current_price = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
@@ -305,4 +310,5 @@ while True:
     except ValueError:
         print("Not a valid ticker! \nEnter a ticker symbol.")
     except AttributeError:
+        print("Could not find data.")
         exit()
