@@ -5,9 +5,13 @@ import requests
 import numpy as np
 from bs4 import BeautifulSoup
 
+# Enter Required Return
+required_return = float(input("Enter your required returned as a decimal. \n"))
+
 while True:
     try:
-        company = input("\nWhat company would you like to value?\nType 'exit' to close. ").upper()
+        # Enter the ticker to evaluate
+        company = input("\nWhat company would you like to value?\n").upper()
         if company == 'exit':
             exit()
         else:
@@ -71,7 +75,8 @@ while True:
             df_e.columns = range(df_e.shape[1])
 
             # Remove "$" form data
-            array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(float)
+            array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '',
+                                                                                         regex=True).astype(float)
 
             # Get the log growth rate
 
@@ -81,7 +86,6 @@ while True:
 
             avg_ebitda_growth = array_grwth_ebitda.mean()
             avg_ebitda_growth = float(avg_ebitda_growth)
-
 
             ## Get the Five-year Revenue Growth Rate
             url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/revenue'
@@ -93,7 +97,8 @@ while True:
             df_r.columns = range(df_r.shape[1])
 
             # Remove "$" form data
-            array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(float)
+            array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '', regex=True).astype(
+                float)
 
             # Get the log growth rate
             array_grwth_rev = np.log((array_grwth_rev) / array_grwth_rev.shift(-1))
@@ -103,14 +108,12 @@ while True:
             avg_rev_growth = array_grwth_rev.mean()
             avg_rev_growth = float(avg_rev_growth)
 
-
             # Average Revenue and EBITDA Growth Rate
 
-            avg_growth_rate  = (avg_ebitda_growth + avg_rev_growth)/2
-
+            avg_growth_rate = (avg_ebitda_growth + avg_rev_growth) / 2
 
             ## Get projected EPS
-            url = 'https://www.marketwatch.com/investing/stock/' + company +'/analystestimates'
+            url = 'https://www.marketwatch.com/investing/stock/' + company + '/analystestimates'
             r = requests.get(url)
             df_projected_eps = pd.read_html(r.text)
             df_future_eps = pd.DataFrame(df_projected_eps[4], index=[9])
@@ -120,131 +123,109 @@ while True:
 
             #### DCF Valuation
 
+            xn = (avg_growth_rate - 0.04) / 4
+
             # Value in the first three years
 
             ## Year One
 
-                #Cash Flows
+            # Cash Flows
             CF_Y_One = pro_eps * 0.9
 
-                #Present Value
+            # Present Value
             PV_Y_One = CF_Y_One / (1 + ke)
 
             ##Year Two
 
-                # Cash Flow
+            # Cash Flow
             CF_Y_Two = CF_Y_One * (1 + avg_growth_rate)
 
-                # Present Value
-            PV_Y_Two = CF_Y_Two / (1 + ke)**2
+            # Present Value
+            PV_Y_Two = CF_Y_Two / (1 + ke) ** 2
 
             ##  Year Three
 
-                # Cash Flow
+            # Cash Flow
             CF_Y_Three = CF_Y_Two * (1 + avg_growth_rate)
 
-                # Present Value
-            PV_Y_Three = CF_Y_Three / (1 + ke)**3
+            # Present Value
+            PV_Y_Three = CF_Y_Three / (1 + ke) ** 3
+
+            # Stage 1
+            # Year 4
+            CF_Y_Four = CF_Y_Three * (1 + avg_growth_rate)
+
+            # Present Value
+            PV_Y_Four = CF_Y_Four / (1 + ke) ** 4
+
+            # Year 5
+            CF_Y_Five = CF_Y_Four * (1 + avg_growth_rate)
+
+            # Present Value
+            PV_Y_Five = CF_Y_Five / (1 + ke) ** 5
+
+            # Year 6
+            CF_Y_Six = CF_Y_Five * (1 + avg_growth_rate)
+
+            # Present Value
+            PV_Y_Six = CF_Y_Six / (1 + ke) ** 5
+
+            # Stage 2
+            ##Year Four
+            # Dividends
+            Div_Y_Four = CF_Y_Three * ((1 + avg_growth_rate) ** 4) * ((1 + avg_growth_rate - xn) ** (4 - 3))
+
+            # Cash Flow with Divided
+            CF_Y_Four_Div = Div_Y_Four / (1 + required_return) ** (4 + 3)
+
+            ## Year Five
+            # Dividends
+            Div_Y_Five = Div_Y_Four * (1 + required_return) - (5 - 3) * (xn)
+
+            # Cash Flow with Divided
+            CF_Y_Five_Div = Div_Y_Five / (1 + required_return) ** (5 + 3)
+
+            ## Year Six
+            # Dividends
+            Div_Y_Six = Div_Y_Five * (1 + required_return) - (6 - 3) * (xn)
+
+            # Cash Flow with Divided
+            CF_Y_Six_Div = Div_Y_Six / (1 + required_return) ** (6 + 3)
+
+            ## Year Seven
+            # Dividends
+            Div_Y_Seven = Div_Y_Six * (1 + required_return) - (7 - 3) * (xn)
+
+            # Cash Flow with Divided
+            CF_Y_Seven_Div = Div_Y_Seven / (1 + required_return) ** (7 + 3)
+
+            ## Year Six
+            # Dividends
+            Div_Y_Eight = Div_Y_Seven * (1 + required_return) - (8 - 3) * (xn)
+
+            # Cash Flow with Divided
+            CF_Y_Eight_Div = Div_Y_Eight / (1 + required_return) ** (8 + 3)
+
+            ## Terminal Value
+            Terminal_Value_Step_one = CF_Y_Eight_Div * (1 + 0.04)
+            Terminal_Value_Step_two = Terminal_Value_Step_one / (required_return - 0.04)
 
             ## Value of first Three Years
 
             Value_First_Three_Years = PV_Y_One + PV_Y_Two + PV_Y_Three
 
-            # Stage 1
-            # Stage one Growth Rate is avg_growth_rate * .85
-            ##Year Four
-
-            Stage_One_Growth_Rate = avg_growth_rate * .85
-
-                # Cash Flow
-            CF_Y_Four = CF_Y_Three * (1 + Stage_One_Growth_Rate)
-
-                # Present Value
-            PV_Y_Four = CF_Y_Four / (1 + ke)**4
-
-            ##Year Five
-
-                # Cash Flow
-            CF_Y_Five = CF_Y_Four * (1 + Stage_One_Growth_Rate)
-
-                # Present Value
-            PV_Y_Five = CF_Y_Five / (1 + ke)**5
-
-            ##Year Six
-
-                # Cash Flow
-            CF_Y_Six = CF_Y_Five * (1 + Stage_One_Growth_Rate)
-
-                # Present Value
-            PV_Y_Six = CF_Y_Six / (1 + ke)**6
-
-            # Value at Stage 1
+            ## Value of Stage 1
             Value_Stage_One = PV_Y_Four + PV_Y_Five + PV_Y_Six
 
-            # Stage 2
-            # Stage two Growth Rate is avg_growth_rate * .65
+            ## Value of Stage 2
+            Value_Stage_Two = CF_Y_Four_Div + CF_Y_Five_Div + CF_Y_Six_Div + CF_Y_Seven_Div + CF_Y_Eight_Div
 
-            ##Year Seven
-            Stage_Two_Growth_Rate = avg_growth_rate * .65
+            ## Value at Stage 3
+            Value_Stage_Three = Terminal_Value_Step_two / (1 + ke) ** (avg_growth_rate + 5 + 3)
 
-                # Cash Flow
-            CF_Y_Seven = CF_Y_Six * (1 + Stage_Two_Growth_Rate)
+            ##Value of the Stock
+            Value_of_Stock = Value_First_Three_Years + Value_Stage_One + Value_Stage_Two + Value_Stage_Three
 
-                # Present Value
-            PV_Y_Seven = CF_Y_Seven / (1 + ke)**7
-
-            ##Year Eight
-
-                # Cash Flow
-            CF_Y_Eight = CF_Y_Seven * (1 + Stage_Two_Growth_Rate)
-
-                # Present Value
-            PV_Y_Eight = CF_Y_Eight / (1 + ke)**8
-
-            ##Year Nine
-
-                # Cash Flow
-            CF_Y_Nine = CF_Y_Eight * (1 + Stage_Two_Growth_Rate)
-
-                # Present Value
-            PV_Y_Nine = CF_Y_Nine / (1 + ke)**9
-
-            # Value at Stage 2
-            Value_Stage_Two = PV_Y_Seven + PV_Y_Eight + PV_Y_Nine
-
-            # Stage 3
-            # Stage two Growth Rate is avg_growth_rate * .35
-
-            ##Year 10
-            Stage_Three_Growth_Rate = avg_growth_rate * .35
-
-                # Cash Flow
-            CF_Y_Ten = CF_Y_Nine * (1 + Stage_Three_Growth_Rate)
-
-                # Present Value
-            PV_Y_Ten = CF_Y_Ten / (1 + ke)**10
-
-            ##Year 11
-
-                # Cash Flow
-            CF_Y_Eleven = CF_Y_Ten * (1 + Stage_Three_Growth_Rate)
-
-                # Present Value
-            PV_Y_Eleven = CF_Y_Eleven / (1 + ke)**11
-
-            ##Year 12
-
-                # Cash Flow
-            CF_Y_Twelve = CF_Y_Eleven * (1 + Stage_Three_Growth_Rate)
-
-                # Present Value
-            PV_Y_Twelve = CF_Y_Twelve / (1 + ke)**12
-
-            # Value at Stage 2
-            Value_Stage_Three = PV_Y_Ten + PV_Y_Eleven + PV_Y_Twelve
-
-###################### Working in Progress ###################### Working in Progress
-            T_Val = ((CF_Y_Twelve * ( 1 + Stage_Three_Growth_Rate)) / (ke - Stage_Three_Growth_Rate))/4
             ## Get TTM EPS
             url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/eps-earnings-per-share-diluted'
             r = requests.get(url)
@@ -295,7 +276,7 @@ while True:
 
 
 ## Weighted Average of Estimates
-            W_Avg_Est = int_val *.25 + T_Val*.25 + RA*.5
+            W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
 
             print('The best estimated value of ' + company + ' is $' + str(round(W_Avg_Est,2)) + '.')
             # Get the current stock price
@@ -310,4 +291,3 @@ while True:
         print("Not a valid ticker! \nEnter a ticker symbol.")
     except AttributeError:
         print("Could not find data. \nTry again.")
-
