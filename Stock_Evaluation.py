@@ -334,9 +334,6 @@ while True:
 
         print("\nThe current stock price of " + company + " is $" + current_price + '.')
 
-        if RuntimeWarning:
-            print("\u0332".join("Logic Error!"))
-            print("A negative log was taken.")
     except ValueError:
         print("'ValueError'\nCould not find data.")
     except IndexError:
