@@ -293,7 +293,7 @@ while True:
 ## Weighted Average of Estimates
             W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
  print('Price to Cash Flows: ' + str(round(Price_PCF, 2)))
-            print('Price to Book Value: ' + str(round(Price_PB, 2)))
+            print('\nPrice to Book Value: ' + str(round(Price_PB, 2)))
             print('Price to Sales: ' + str(round(Price_PS, 2)))
             print('Price to Equity: ' + str(round(Price_PE, 2)))
             print('Relative Average:  ' +str(round(RA, 2)))
