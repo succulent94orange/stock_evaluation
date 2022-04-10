@@ -4,7 +4,6 @@ import numpy as np
 from bs4 import BeautifulSoup
 import re
 
-
 while True:
     try:
         # Enter Required Return
