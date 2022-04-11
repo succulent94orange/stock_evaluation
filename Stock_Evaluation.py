@@ -3,17 +3,20 @@ import requests
 import numpy as np
 from bs4 import BeautifulSoup
 import re
+from lxml.etree import ParserError
+from lxml.etree import ParserError
+
 
 while True:
     try:
         # Enter Required Return
-        required_return = input("\nEnter your required returned as a decimal.")
+        required_return = input("\nEnter your required returned as a decimal.\nThen press enter.")
         if required_return == 'exit':
             exit()
         else:
             required_return = float(required_return)
         # Enter the ticker to evaluate
-        company = input("\nWhat company would you like to value?\nEnter the ticker.").upper()
+        company = input("\nWhat company would you like to value?\nEnter the ticker.\nThen press enter.").upper()
         if company == 'exit':
             exit()
         else:
@@ -81,8 +84,7 @@ while True:
                 df_e.columns = range(df_e.shape[1])
 
                 # Convert to float
-                array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,.]', '',
-                                                                                             regex=True).astype(float)
+                array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,.]', '',regex=True).astype(float)
 
                 # Get the log growth rate
 
@@ -94,10 +96,14 @@ while True:
                 avg_ebitda_growth = float(avg_ebitda_growth)
             except ValueError:
                 avg_ebitda_growth = None
+            except ParserError:
+                avg_ebitda_growth = None
+            except OSError:
+                avg_ebitda_growth = None
 
             try:
                 ## Get the Five-year Revenue Growth Rate
-                url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/revenue'
+                url = 'https://www.macrotrends.net/stocks/charts/' + company +'/' + company + '/revenue'
                 r = requests.get(url)
                 df_rev = pd.read_html(r.text)
                 df_r = pd.DataFrame(df_rev[0])
@@ -119,7 +125,10 @@ while True:
                 avg_rev_growth = float(avg_rev_growth)
             except ValueError:
                 avg_rev_growth = None
-
+            except ParserError:
+                avg_rev_growth = None
+            except OSError:
+                avg_rev_growth = None
             try:
                 ## Get the Five-Year EPS Growth Rate
 
@@ -144,6 +153,10 @@ while True:
                 avg_eps_growth = grwth_eps.mean()
                 avg_eps_growth = float(avg_eps_growth)
             except ValueError:
+                avg_eps_growth = None
+            except ParserError:
+                avg_eps_growth = None
+            except OSError:
                 avg_eps_growth = None
 
             avg_growth_rate_data = [avg_eps_growth, avg_ebitda_growth, avg_rev_growth]
@@ -333,11 +346,10 @@ while True:
         current_price = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
 
         print("\nThe current stock price of " + company + " is $" + current_price + '.')
-
     except ValueError:
         print("'ValueError'\nCould not find data.")
     except IndexError:
         print("'IndexError'\nCould not find data.")
     except AttributeError:
         print("'AttributeError'\nCould not find data.")
-        exit()
+
