@@ -13,7 +13,7 @@ while True:
         else:
             required_return = float(required_return)
         # Enter the ticker to evaluate
-        company = input("\nWhat company would you like to value?\n").upper()
+        company = input("\nWhat company would you like to value?\nEnter the ticker.").upper()
         if company == 'exit':
             exit()
         else:
