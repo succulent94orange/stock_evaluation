@@ -352,4 +352,3 @@ while True:
         print("'IndexError'\nCould not find data.")
     except AttributeError:
         print("'AttributeError'\nCould not find data.")
-
