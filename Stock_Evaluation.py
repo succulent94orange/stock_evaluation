@@ -3,20 +3,17 @@ import requests
 import numpy as np
 from bs4 import BeautifulSoup
 import re
-from lxml.etree import ParserError
-from lxml.etree import ParserError
-
 
 while True:
     try:
         # Enter Required Return
-        required_return = input("\nEnter your required returned as a decimal.\nThen press enter.")
+        required_return = input("\nEnter your required returned as a decimal.")
         if required_return == 'exit':
             exit()
         else:
             required_return = float(required_return)
         # Enter the ticker to evaluate
-        company = input("\nWhat company would you like to value?\nEnter the ticker.\nThen press enter.").upper()
+        company = input("\nWhat company would you like to value?\n").upper()
         if company == 'exit':
             exit()
         else:
@@ -74,7 +71,7 @@ while True:
             ke = CAPM / 100
 
             try:
-                ## Get the Five-Year EBITDA Growth Rate
+                ## Get the 10-Year EBITDA Growth Rate
                 url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/ebitda'
                 r = requests.get(url)
                 df_ebitda = pd.read_html(r.text)
@@ -84,7 +81,7 @@ while True:
                 df_e.columns = range(df_e.shape[1])
 
                 # Convert to float
-                array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,.]', '',regex=True).astype(float)
+                array_grwth_ebitda = pd.DataFrame(df_e[1], index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).replace('[\$,]', '', regex=True).astype(float)
 
                 # Get the log growth rate
 
@@ -96,14 +93,10 @@ while True:
                 avg_ebitda_growth = float(avg_ebitda_growth)
             except ValueError:
                 avg_ebitda_growth = None
-            except ParserError:
-                avg_ebitda_growth = None
-            except OSError:
-                avg_ebitda_growth = None
 
             try:
-                ## Get the Five-year Revenue Growth Rate
-                url = 'https://www.macrotrends.net/stocks/charts/' + company +'/' + company + '/revenue'
+                ## Get the 10-year Revenue Growth Rate
+                url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/revenue'
                 r = requests.get(url)
                 df_rev = pd.read_html(r.text)
                 df_r = pd.DataFrame(df_rev[0])
@@ -112,9 +105,7 @@ while True:
                 df_r.columns = range(df_r.shape[1])
 
                 # Remove "$" form data
-                array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5]).replace('[\$,]', '',
-                                                                                          regex=True).astype(
-                    float)
+                array_grwth_rev = pd.DataFrame(df_r[1], index=[0, 1, 2, 3, 4, 5, 6, 7 , 8, 9]).replace('[\$,]', '',regex=True).astype(float)
 
                 # Get the log growth rate
                 array_grwth_rev = np.log((array_grwth_rev) / array_grwth_rev.shift(-1))
@@ -125,12 +116,9 @@ while True:
                 avg_rev_growth = float(avg_rev_growth)
             except ValueError:
                 avg_rev_growth = None
-            except ParserError:
-                avg_rev_growth = None
-            except OSError:
-                avg_rev_growth = None
+
             try:
-                ## Get the Five-Year EPS Growth Rate
+                ## Get the 10-Year EPS Growth Rate
 
                 url = 'https://www.macrotrends.net/stocks/charts/' + company + '/' + company + '/eps-earnings-per-share-diluted'
                 r = requests.get(url)
@@ -141,8 +129,7 @@ while True:
                 df_eps.columns = range(df_eps.shape[1])
 
                 # Remove "$" form data
-                grwth_eps = pd.DataFrame(df_eps[1], index=[0, 1, 2, 3, 4]).replace('[\$,.]', '', regex=True).astype(
-                    float)
+                grwth_eps = pd.DataFrame(df_eps[1], index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).replace('[\$]', '',regex=True).astype(float)
 
                 # Get the log growth rate
 
@@ -154,15 +141,16 @@ while True:
                 avg_eps_growth = float(avg_eps_growth)
             except ValueError:
                 avg_eps_growth = None
-            except ParserError:
-                avg_eps_growth = None
-            except OSError:
-                avg_eps_growth = None
 
             avg_growth_rate_data = [avg_eps_growth, avg_ebitda_growth, avg_rev_growth]
             average_growth_rate = pd.DataFrame(avg_growth_rate_data)
             avg_grwth_rate = average_growth_rate.mean()
             avg_growth_rate = avg_grwth_rate.to_numpy()
+            avg_eps_growth_print = avg_eps_growth * 100
+            avg_ebitda_growth_print = avg_ebitda_growth * 100
+            avg_rev_growth_print = avg_rev_growth * 100
+            avg_growth_rate_print = avg_growth_rate * 100
+
         ## Get projected EPS
         url = 'https://www.marketwatch.com/investing/stock/' + company + '/analystestimates'
         r = requests.get(url)
@@ -173,6 +161,7 @@ while True:
         pro_eps = float(pro_eps)
 
         #### DCF Valuation
+        #Slow growth rate for Stage 2
         xn = (avg_growth_rate - 0.04) / 4
 
         # Value in the first three years
@@ -333,22 +322,36 @@ while True:
         W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
         W_Avg_Est = np.round(W_Avg_Est, 2)
 
+        print('\nCost of Capital: ' + str(round(CAPM,2)) + '%.')
+        print('Beta: ' + str(beta))
+        print('\n10-year EBITDA growth rate average: ' + str(round(avg_ebitda_growth_print, 2)) + '%.')
+        print('10-year revenue growth rate: ' + str(round(avg_rev_growth_print,2)) + '%.')
+        print('10-year EPS growth rate is: '  + str(round(avg_eps_growth_print, 2)) + '%.')
+        print('The average growth rate used for the calculation is ' + str(round(*avg_growth_rate_print, 2)) + '%.')
         print('\nP/CF market value: $' + str(round(Price_PCF, 2)))
         print('P/B market value: $' + str(round(Price_PB, 2)))
         print('P/S market value: $ ' + str(round(Price_PS, 2)))
         print('P/E market value: $ ' + str(round(Price_PE, 2)))
-        print('\nRelative Average: $  ' +str(*RA))
+        print('Relative Average: $  ' +str(*RA))
         print('\nThe best estimated value of ' + company + ' is $' + str(*W_Avg_Est) + '.')
-        # Get the current stock price
 
+        # Get the current stock price
         url = requests.get(f'https://www.cnbc.com/quotes/{company}').text
         soup = BeautifulSoup(url, 'lxml')
         current_price = soup.find('span', {'class': 'QuoteStrip-lastPrice'}).text
 
         print("\nThe current stock price of " + company + " is $" + current_price + '.')
+
     except ValueError:
-        print("'ValueError'\nCould not find data.")
+        print("\u0332".join("ValueError!"))
+        print("Could not find data.")
     except IndexError:
-        print("'IndexError'\nCould not find data.")
+        print("\u0332".join("IndexError!"))
+        print("Could not find data.")
+    except NameError:
+        print("\u0332".join("NameError!"))
+        print("Not a valid input!\nEnter a ticker symbol.")
     except AttributeError:
-        print("'AttributeError'\nCould not find data.")
+        print("\u0332".join("AttributeError!"))
+        print("nCould not find data.")
+        exit()
