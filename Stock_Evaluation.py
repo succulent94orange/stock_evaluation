@@ -319,14 +319,14 @@ while True:
 
 
 ## Weighted Average of Estimates
-        W_Avg_Est = int_val *.25 +  Value_of_Stock*.5 + RA*.25
+        W_Avg_Est = int_val *.1 +  Value_of_Stock*.80 + RA*.1
         W_Avg_Est = np.round(W_Avg_Est, 2)
 
         print('\nCost of Capital: ' + str(round(CAPM,2)) + '%.')
         print('Beta: ' + str(beta))
         print('\n10-year EBITDA growth rate average: ' + str(round(avg_ebitda_growth_print, 2)) + '%.')
-        print('10-year revenue growth rate: ' + str(round(avg_rev_growth_print,2)) + '%.')
-        print('10-year EPS growth rate is: '  + str(round(avg_eps_growth_print, 2)) + '%.')
+        print('10-year revenue growth rate average: ' + str(round(avg_rev_growth_print,2)) + '%.')
+        print('10-year EPS growth rate average: '  + str(round(avg_eps_growth_print, 2)) + '%.')
         print('The average growth rate used for the calculation is ' + str(round(*avg_growth_rate_print, 2)) + '%.')
         print('\nP/CF market value: $' + str(round(Price_PCF, 2)))
         print('P/B market value: $' + str(round(Price_PB, 2)))
